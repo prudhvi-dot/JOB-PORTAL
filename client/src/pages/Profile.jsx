@@ -3,8 +3,10 @@ import { UserProfile } from "@clerk/clerk-react";
 
 function ProfilePage() {
   return (
-    <div className="flex items-center justify-center min-h-screen mt-2">
-      <UserProfile />
+    <div className="flex  justify-center mt-2">
+      <div className="h-[500px] overflow-hidden rounded-xl shadow-md">
+        <UserProfile />
+      </div>
     </div>
   );
 }

@@ -9,6 +9,9 @@ import Applications from "./pages/Applications";
 import ApplyJobs from "./pages/ApplyJobs";
 import MainLayout from "./components/layout/MainLayout";
 import ProfilePage from "./pages/Profile";
+import RecruiterLogin from "./components/RecruiterLogin";
+import { useContext } from "react";
+import { Appcontext } from "./context/AppContext";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -21,7 +24,14 @@ const router = createBrowserRouter(
   )
 );
 function App() {
-  return <RouterProvider router={router} />;
+  const { showRecruiterLogin } = useContext(Appcontext);
+  return (
+    <>
+      {showRecruiterLogin && <RecruiterLogin />}
+
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;
