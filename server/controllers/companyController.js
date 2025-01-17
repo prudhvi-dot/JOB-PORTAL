@@ -79,7 +79,15 @@ export const loginCompany = async (req, res) => {
   }
 };
 
-export const getCompanyData = async (req, res) => {};
+export const getCompanyData = async (req, res) => {
+  try {
+    const company = req.company;
+
+    res.status(200).json({ success: true, company });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};
 
 export const postJob = async (req, res) => {
   const { title, salary, description, location, level, category } = req.body;
@@ -106,8 +114,34 @@ export const postJob = async (req, res) => {
 
 export const getCompanyJobApplicants = async (req, res) => {};
 
-export const getCompanyPostedJobs = async (req, res) => {};
+export const getCompanyPostedJobs = async (req, res) => {
+  try {
+    const companyId = req.company._id;
 
-export const changeJobApplicationStatus = async (req, res) => {};
+    const jobs = await jobModel.find({ company: companyId });
+
+    res.status(200).json({ success: true, jobs });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const changeJobApplicationStatus = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const companyId = req.company._id;
+    const job = await jobModel.findById(id);
+
+    if (companyId.toString() === job.company.toString()) {
+      job.visible = !job.visible;
+    }
+
+    await job.save();
+
+    res.status(200).json({ success: true, job });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};
 
 export const changeVisibility = async (req, res) => {};
