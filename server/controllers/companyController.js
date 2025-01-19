@@ -2,6 +2,8 @@ import Company from "../models/companyModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import generateJWT from "../utils/generateJWT.js";
 import jobModel from "../models/jobModel.js";
+import jwt from "jsonwebtoken";
+import jobApplicationsModel from "../models/jobApplicationModel.js";
 
 export const registerCompany = async (req, res) => {
   const { name, email, password } = req.body;
@@ -33,8 +35,9 @@ export const registerCompany = async (req, res) => {
       image: imageUpload.secure_url,
     });
 
-    generateJWT(res, company._id);
     company.password = null;
+
+    generateJWT(res, company._id);
 
     res.json({
       success: true,
@@ -67,12 +70,15 @@ export const loginCompany = async (req, res) => {
         .json({ success: false, error: "Invalid email or password" });
     }
 
-    generateJWT(res, company._id);
+    const persistToken = generateJWT(res, company._id);
     company.password = null;
 
-    res
-      .status(200)
-      .json({ success: true, message: "Login successful", company });
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      company,
+      persistToken,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
@@ -105,7 +111,7 @@ export const postJob = async (req, res) => {
       level,
     });
 
-    res.status(201).json(newJob);
+    res.status(201).json({ success: true, newJob });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -118,7 +124,14 @@ export const getCompanyPostedJobs = async (req, res) => {
   try {
     const companyId = req.company._id;
 
-    const jobs = await jobModel.find({ company: companyId });
+    const jobsData = await jobModel.find({ company: companyId });
+
+    const jobs = await Promise.all(
+      jobsData.map(async (job) => {
+        const applicants = await jobApplicationsModel.find({ jobId: job._id });
+        return { ...job.toObject(), applicants: applicants.length };
+      })
+    );
 
     res.status(200).json({ success: true, jobs });
   } catch (error) {
@@ -144,4 +157,27 @@ export const changeJobApplicationStatus = async (req, res) => {
   }
 };
 
-export const changeVisibility = async (req, res) => {};
+export const logout = async (req, res) => {
+  try {
+    res.clearCookie("jwt");
+    res.clearCookie("persistJWT");
+    res.status(200).json({ success: true, message: "Logged out succesfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const changeVisibility = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const job = await jobModel.findById(id);
+    job.visible = !job.visible;
+
+    await job.save();
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

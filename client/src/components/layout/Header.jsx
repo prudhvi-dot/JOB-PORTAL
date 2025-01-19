@@ -10,7 +10,7 @@ function Header() {
   const { openSignIn } = useClerk();
   const { user } = useUser();
   const navigate = useNavigate();
-  const { showRecruiterLogin, setShowRecruiterLogin } = useContext(Appcontext);
+  const { companyData } = useContext(Appcontext);
   return (
     <div className="shadow py-4 lg:px-4 sticky top-0 bg-white z-50">
       <div className="container px-4 2xl:px-20 mx-auto flex justify-between items-center">
@@ -34,7 +34,7 @@ function Header() {
         ) : (
           <div className="flex gap-4">
             <button
-              onClick={() => setShowRecruiterLogin(true)}
+              onClick={() => navigate("recruiter-login")}
               className="text-gray-600"
             >
               Recruiter Login

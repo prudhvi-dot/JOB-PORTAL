@@ -6,6 +6,7 @@ import {
   getCompanyJobApplicants,
   getCompanyPostedJobs,
   loginCompany,
+  logout,
   postJob,
   registerCompany,
 } from "../controllers/companyController.js";
@@ -17,6 +18,7 @@ const router = express.Router();
 router.post("/register", upload.single("image"), registerCompany);
 
 router.post("/login", loginCompany);
+router.post("/logout", logout);
 
 router.get("/company", authorize, getCompanyData);
 

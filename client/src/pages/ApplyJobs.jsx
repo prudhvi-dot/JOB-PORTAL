@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Appcontext } from "../context/AppContext";
 import Loading from "../components/Loading";
 import { assets } from "../assets/assets";
@@ -7,27 +7,61 @@ import kconvert from "k-converter";
 import moment from "moment";
 import JobCard from "../components/JobCard";
 import Footer from "../components/Footer";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useAuth } from "@clerk/clerk-react";
 
 function ApplyJobs() {
   const { id } = useParams();
+  const { getToken } = useAuth();
   const [jobData, setJobData] = useState(null);
-  const { jobs } = useContext(Appcontext);
+  const { jobs, userData, userApplications } = useContext(Appcontext);
+
+  const navigate = useNavigate();
 
   const fetchJob = async () => {
-    const data = jobs.filter((job) => job._id == id);
+    try {
+      const { data } = await axios.get(`/api/jobs/${id}`);
+      if (data.success) {
+        setJobData(data.job);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-    if (data.length !== 0) {
-      setJobData(data[0]);
-      console.log(data);
+  const applyHandler = async () => {
+    try {
+      if (!userData) {
+        return toast.error("Login to apply");
+      }
+
+      if (!userData.resume) {
+        navigate("/applications");
+        return toast.error("Upload resume to apply");
+      }
+
+      const token = await getToken();
+
+      const { data } = await axios.post(
+        "/api/users/apply",
+        { jobId: jobData._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success("Applied Successfully");
+      }
+    } catch (error) {
+      toast.error(error.response.data.error);
+      console.log(error);
     }
   };
 
   useEffect(() => {
-    if (jobs.length > 0) {
-      fetchJob();
-    }
+    fetchJob();
     window.scrollTo(0, 0);
-  }, [id, jobs]);
+  }, [id]);
 
   return jobData ? (
     <>
@@ -37,7 +71,7 @@ function ApplyJobs() {
             <div className="flex flex-col md:flex-row items-center">
               <img
                 className="h-24 bg-white rounded-lg p-4 mr-4 max-md:mb-4 border"
-                src={jobData.companyId.image}
+                src={jobData.company.image}
                 alt=""
               />
               <div className="text-center md:text-left text-neutral-700">
@@ -47,7 +81,7 @@ function ApplyJobs() {
                 <div className="flex flex-row flex-wrap max-md:justify-center gap-y-2 gap-6 items-center text-gray-600 mt-2">
                   <span className="flex items-center gap-1">
                     <img src={assets.suitcase_icon} alt="" />
-                    {jobData.companyId.name}
+                    {jobData.company.name}
                   </span>
                   <span className="flex items-center gap-1">
                     <img src={assets.location_icon} alt="" />
@@ -65,7 +99,10 @@ function ApplyJobs() {
               </div>
             </div>
             <div className="flex flex-col justify-center text-end text-sm max-md:text-center">
-              <button className="bg-blue-600 py-2.5 px-8 text-white rounded">
+              <button
+                onClick={applyHandler}
+                className="bg-blue-600 py-2.5 px-8 text-white rounded"
+              >
                 Apply Now
               </button>
               <p className="mt-1 text-gray-600">
@@ -81,17 +118,20 @@ function ApplyJobs() {
                 className="rich-text"
                 dangerouslySetInnerHTML={{ __html: jobData.description }}
               ></div>
-              <button className="bg-blue-600 py-2.5 px-8 text-white rounded mt-10">
+              <button
+                onClick={applyHandler}
+                className="bg-blue-600 py-2.5 px-8 text-white rounded mt-10"
+              >
                 Apply Now
               </button>
             </div>
             <div className="w-full lg:w-1/3 mt-8 lg:mt-0 lg:ml-8 space-y-5">
-              <h2>More jobs from {jobData.companyId.name}</h2>
+              <h2>More jobs from {jobData.company.name}</h2>
               {jobs
                 .filter(
                   (job) =>
                     job._id !== jobData._id &&
-                    job.companyId._id === jobData.companyId._id
+                    job.company._id === jobData.company._id
                 )
                 .filter((job) => true)
                 .slice(0, 4)

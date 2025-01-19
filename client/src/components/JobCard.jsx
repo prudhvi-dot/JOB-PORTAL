@@ -7,7 +7,7 @@ const JobCard = ({ job }) => {
   return (
     <div className="border p-6 shadow rounded">
       <div className="flex items-center">
-        <img className="h-8" src={assets.company_icon} />
+        <img className="h-12 w-12 rounded-full" src={job.company.image} />
       </div>
       <h4 className="font-medium text-xl m-2">{job.title}</h4>
       <div className="flex items-center gap-3 mt-2 text-xs">

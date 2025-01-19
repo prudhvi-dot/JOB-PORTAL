@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import Quill from "quill";
 import { JobCategories, JobLocations } from "../assets/assets";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Addjob = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +16,35 @@ const Addjob = () => {
 
   const editorRef = useRef(null);
   const quillRef = useRef(null);
+
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      const description = quillRef.current.root.innerHTML;
+      const { data } = await axios.post("/api/company/postJob", {
+        ...formData,
+        description,
+      });
+
+      // console.log(data);
+
+      if (data.success) {
+        toast.success("added successfully");
+        console.log(data);
+        setFormData({
+          title: "",
+          location: "Banglore",
+          category: "Programming",
+          level: "Beginer level",
+          salary: 0,
+        });
+        quillRef.current.root.innerHTML = "";
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.error);
+    }
+  };
 
   useEffect(() => {
     if (!quillRef.current && editorRef.current) {
@@ -29,7 +60,10 @@ const Addjob = () => {
     });
   };
   return (
-    <form className="container p-4 flex- flex-col items-start gap-3">
+    <form
+      onSubmit={onSubmitHandler}
+      className="container p-4 flex- flex-col items-start gap-3"
+    >
       <div className="w-full">
         <p className="mb-2">Job Title</p>
         <input
@@ -82,7 +116,7 @@ const Addjob = () => {
           <select
             className="w-full px-3 py-2 border-2 border-gray-300 rounded"
             onChange={handleOnChange}
-            name="category"
+            name="level"
           >
             <option value="Beginner level">Beginner level</option>
             <option value="Intermediate level">Intermediate level</option>
@@ -101,7 +135,10 @@ const Addjob = () => {
           placeholder="2500"
         />
       </div>
-      <button className="w-28 py-3 mt-4 bg-black text-white rounded">
+      <button
+        type="submit"
+        className="w-28 py-3 mt-4 bg-black text-white rounded"
+      >
         Add
       </button>
     </form>
